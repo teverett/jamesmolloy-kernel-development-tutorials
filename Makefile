@@ -1,11 +1,20 @@
 .POSIX:
 
+UNAME := $(shell uname)
+ifeq ($(UNAME),Darwin)
+GCC=x86_64-elf-gcc
+LD=x86_64-elf-ld
+else
+GCC=gcc
+LD=ld
+endif
+
 ASM_EXT ?= .asm
 BOOT_PATH ?= iso/boot
 C_EXT ?= .c
 OBJ_EXT ?= .o
-
 DIR ?=
+
 
 # If DIR is empty, take actions on every directory.
 ifeq ($(strip $(DIR)),)
@@ -41,10 +50,10 @@ $(IMG): $(ELF)
 	grub-mkrescue -o '$@' iso
 
 $(ELF): $(OBJS)
-	ld -o '$(ELF)' -melf_i386 -Tlink.ld $^
+	$(LD) -o '$(ELF)' -melf_i386 -Tlink.ld $^
 
 $(DIR)/%$(OBJ_EXT): $(DIR)/%$(C_EXT)
-	gcc -c -ggdb3 -Wextra -fno-builtin -fno-stack-protector -m32 -nostdlib -nostdinc -std=gnu99 -o '$@' '$<'
+	$(GCC) -c -ggdb3 -Wextra -Wno-implicit-function-declaration -fno-builtin -fno-stack-protector -m32 -nostdlib -nostdinc -std=gnu99 -o '$@' '$<'
 
 NASM_RULE := nasm -felf -o
 $(DIR)/%$(OBJ_EXT): $(DIR)/%$(ASM_EXT)
